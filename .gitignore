@@ -1,0 +1,67 @@
+# Environment
+.env
+.env.local
+.env.production
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Type checking
+.mypy_cache/
+
+# Data (large files)
+data/sample_recordings/*.mp4
+data/sample_recordings/*.avi
+data/expression_dataset/*.zip
+data/expression_dataset/train/
+data/expression_dataset/test/
+data/test_lectures/*.mp4
+
+# Model weights (downloaded on setup)
+models/weights/*.pt
+models/weights/*.pth
+models/weights/*.onnx
+models/weights/*.tflite
+
+# Reports output
+reports_output/
+
+# Internal planning docs (not for git)
+_internal/
+
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# Docker
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
