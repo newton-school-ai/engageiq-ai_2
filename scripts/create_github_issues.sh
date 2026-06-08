@@ -31,7 +31,7 @@ M6="M6: Teacher Analytics and Insights"
 M7="M7: Report Generator and Intervention Agent"
 M8="M8: Dashboard, Integration and Demo"
 
-# ─── STEP 2: Create Issues ──────────────────────────────────────────────────
+# --- STEP 2: Create Issues --------------------------------------------------
 
 echo ""
 echo ">>> Creating issues..."
@@ -51,11 +51,11 @@ create_issue() {
     --milestone "$milestone" \
     --label "$labels" \
     --body "$body" > /dev/null 2>&1
-  echo "✓"
+  echo "done"
   sleep 1
 }
 
-# ─── M1 Issues (#1-7) ───────────────────────────────────────────────────────
+# --- M1 Issues (#1-7) -------------------------------------------------------
 
 create_issue 1 "Initialize repo scaffold, CI config, Docker setup" "$M1" "m1,infra" \
 "## Why
@@ -386,59 +386,85 @@ asyncio.run(test())
 
 Closes #1, Closes #4"
 
-create_issue 6 "Build user onboarding and role management API" "$M1" "m1,infra" \
+create_issue 6 "Build user auth with Google OAuth, JWT sessions, and onboarding API" "$M1" "m1,infra,frontend" \
 "## Why
 
 EngageIQ has two distinct user types - students and teachers - with different permissions, different dashboards, and different data access. A teacher can see class-level analytics but not individual student names (unless opted in). A student can see their own data but not other students'. This role distinction must be enforced at the API level, not just the UI level.
 
-The onboarding flow also captures privacy preferences. Under India's DPDPA (Digital Personal Data Protection Act, 2023), collecting biometric-adjacent data (facial landmarks) requires informed consent. The onboarding screen explains what data is collected, how it is processed (on-device, not stored), and what the student can opt out of. This is not optional - it is a legal requirement.
+Google OAuth is the primary login method because the target users are college students and teachers, almost all of them have a Google account (university email or personal Gmail). One-click Google login reduces signup friction to near zero.
+
+The flow: user clicks \"Sign in with Google\" -> Google consent screen -> backend receives auth code -> exchanges for Google profile (name, email, avatar) -> creates or finds user in database -> issues a JWT token for session management. On first login, the user is directed to an onboarding screen where they select their role (student/teacher) and privacy preferences.
+
+The onboarding flow captures privacy preferences. Under India's DPDPA (Digital Personal Data Protection Act, 2023), collecting biometric-adjacent data (facial landmarks) requires informed consent. The onboarding screen explains what data is collected, how it is processed (on-device, not stored), and what the student can opt out of. This is not optional - it is a legal requirement.
 
 ## What needs to be built
 
-API endpoints for user registration, login, role management, and privacy preferences.
+Google OAuth integration, JWT token issuance/validation, protected route middleware, user onboarding (role + privacy), course CRUD, enrollment, frontend login UI.
 
 ## Files to create or update
 
-- \`src/api/routes/users.py\` - User CRUD and auth endpoints
+- \`src/api/routes/auth.py\` - Google OAuth callback, token issuance, token refresh
+- \`src/api/routes/users.py\` - User profile, onboarding (role + privacy selection)
 - \`src/api/routes/courses.py\` - Course enrollment endpoints
-- \`src/api/schemas/user.py\` - Pydantic request/response schemas
+- \`src/api/middleware/auth.py\` - JWT verification middleware, role-based access (student vs teacher)
+- \`src/api/schemas/user.py\` - Pydantic schemas (UserCreate, UserResponse, TokenResponse)
+- \`src/models/user.py\` - Add google_id, avatar_url, auth_provider fields
+- \`frontend/src/components/GoogleLoginButton.jsx\` - Google sign-in button
+- \`frontend/src/contexts/AuthContext.jsx\` - Auth state management, token storage, auto-refresh
+- \`.env.example\` - Add GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, JWT_SECRET_KEY
 
 ## How this affects overall development
 
-User authentication gates every API endpoint. The session API (#5 WebSocket) needs to know which user is connecting. The nudge preferences (#23) are stored per user. The analytics (#24-26) filter by user role. Without user management, nothing else can be properly tested with realistic multi-user scenarios.
+User identity gates every API endpoint. The session API (#5 WebSocket) needs to know which user is connecting. The nudge preferences (#23) are stored per user. The analytics (#24-26) filter by user role. Protected routes ensure only authenticated users can start webcam sessions or view analytics. Without user management, nothing else can be properly tested with realistic multi-user scenarios.
 
 ## How to test locally
 
 \`\`\`bash
-# Start backend
+# 1. Set up Google OAuth credentials at console.cloud.google.com
+#    - Create OAuth 2.0 Client ID (Web application)
+#    - Add http://localhost:5173 to Authorized JavaScript origins
+#    - Add http://localhost:8000/api/auth/google/callback to Authorized redirect URIs
+#    - Copy Client ID and Client Secret to .env
+
+# 2. Start backend
 uvicorn src.api.main:app --reload
 
-# Register a student
-curl -X POST http://localhost:8000/api/users/register \\
-  -H 'Content-Type: application/json' \\
-  -d '{\"name\": \"Rahul\", \"email\": \"rahul@nst.edu\", \"role\": \"student\", \"privacy_mode\": \"anonymized\"}'
+# 3. Start frontend
+cd frontend && npm run dev
 
-# Register a teacher
-curl -X POST http://localhost:8000/api/users/register \\
-  -H 'Content-Type: application/json' \\
-  -d '{\"name\": \"Prof. Sharma\", \"email\": \"sharma@nst.edu\", \"role\": \"teacher\"}'
+# 4. Click \"Sign in with Google\" -> consent screen -> redirected back -> logged in
+# 5. First-time users see onboarding: select role (student/teacher) + privacy preference
 
-# Enroll student in course
+# 6. Verify JWT works
+TOKEN=\"<jwt_from_login_response>\"
+curl -H \"Authorization: Bearer \$TOKEN\" http://localhost:8000/api/users/me
+
+# 7. Test protected route without token
+curl http://localhost:8000/api/users/me
+# Should return 401 Unauthorized
+
+# 8. Enroll student in course
 curl -X POST http://localhost:8000/api/courses/1/enroll \\
-  -H 'Content-Type: application/json' \\
-  -d '{\"user_id\": 1}'
+  -H \"Authorization: Bearer \$TOKEN\"
 
 pytest tests/test_users.py -v
 \`\`\`
 
 ## Acceptance Criteria
 
-- POST /api/users/register creates user with role (student/teacher)
-- GET /api/users/{id} returns user profile (role-appropriate fields)
-- POST /api/courses/{id}/enroll adds student to course
-- Privacy preferences stored per user: anonymized (default), identified (opt-in)
-- Input validation: email format, role must be student/teacher, duplicate email rejected
-- At least 4 tests: register student, register teacher, enroll, duplicate email
+- [ ] Google OAuth login flow works end-to-end (click -> consent -> JWT -> logged in)
+- [ ] Backend exchanges Google auth code for user profile (name, email, avatar)
+- [ ] New users directed to onboarding screen on first login (select role + privacy)
+- [ ] JWT issued on login, expires in 24 hours, refresh token for 7 days
+- [ ] JWT middleware protects routes: webcam session, engagement data, analytics
+- [ ] Role-based access: teacher-only routes (class analytics, intervention) check role
+- [ ] Privacy mode required for students (must explicitly choose anonymized or identified)
+- [ ] Frontend shows Google login button, user avatar + name after login, logout button
+- [ ] Auth state persists across page refresh (token stored in memory, refresh on expiry)
+- [ ] POST /api/courses/{id}/enroll adds authenticated student to course
+- [ ] GET /api/users/{id} returns user profile (role-appropriate fields)
+- [ ] Input validation: duplicate email rejected, valid roles only
+- [ ] At least 5 tests: Google login mock, JWT validation, protected route 401, role check, course enrollment
 
 ## Branch
 
@@ -524,7 +550,7 @@ alembic downgrade base
 
 Closes #3"
 
-# ─── M2 Issues (#8-11) ──────────────────────────────────────────────────────
+# --- M2 Issues (#8-11) ------------------------------------------------------
 
 create_issue 8 "Integrate MediaPipe Face Mesh with 468 landmarks" "$M2" "m2,cv,detection" \
 "## Why
@@ -625,7 +651,7 @@ frame = cv2.imread('tests/fixtures/sample_face.jpg')
 result = detector.detect(frame)
 landmarks = result.faces[0].landmarks
 pitch, yaw, roll = estimate_head_pose(landmarks, frame.shape)
-print(f'Pitch: {pitch:.1f}°, Yaw: {yaw:.1f}°, Roll: {roll:.1f}°')
+print(f'Pitch: {pitch:.1f}deg, Yaw: {yaw:.1f}deg, Roll: {roll:.1f}deg')
 \"
 
 pytest tests/test_head_pose.py -v
@@ -700,7 +726,7 @@ pytest tests/test_gaze_classifier.py -v
 
 - 5 gaze states: AT_SCREEN, AWAY_LEFT, AWAY_RIGHT, LOOKING_DOWN, EYES_CLOSED
 - Combines head pose (pitch, yaw) with iris position ratio
-- Thresholds: yaw > 20° = away, pitch < -25° = looking down, EAR < 0.2 = eyes closed
+- Thresholds: yaw > 20deg = away, pitch < -25deg = looking down, EAR < 0.2 = eyes closed
 - All thresholds configurable in settings
 - Demo script with color-coded gaze state overlay on webcam
 - At least 5 tests: one per gaze state
@@ -785,7 +811,7 @@ pytest tests/test_face_selector.py -v
 
 Closes #8"
 
-# ─── M3 Issues (#12-15) ─────────────────────────────────────────────────────
+# --- M3 Issues (#12-15) -----------------------------------------------------
 
 create_issue 12 "Build EAR-based drowsiness detector" "$M3" "m3,cv,detection" \
 "## Why
@@ -1055,7 +1081,7 @@ print(f'Model loaded successfully')
 
 Closes #14"
 
-# ─── M4 Issues (#16-19) ─────────────────────────────────────────────────────
+# --- M4 Issues (#16-19) -----------------------------------------------------
 
 create_issue 16 "Design multi-signal engagement scoring" "$M4" "m4,agent,cv" \
 "## Why
@@ -1309,7 +1335,7 @@ print(f'High EAR student threshold: {cm2.ear_threshold:.3f}')  # ~0.28
 
 Closes #12, Closes #16"
 
-# ─── M5 Issues (#20-23) ─────────────────────────────────────────────────────
+# --- M5 Issues (#20-23) -----------------------------------------------------
 
 create_issue 20 "Build nudge decision agent" "$M5" "m5,agent,nudge" \
 "## Why
@@ -1545,7 +1571,7 @@ curl http://localhost:8000/api/preferences/2
 
 Closes #21"
 
-# ─── M6 Issues (#24-26) ─────────────────────────────────────────────────────
+# --- M6 Issues (#24-26) -----------------------------------------------------
 
 create_issue 24 "Build class-level engagement aggregator" "$M6" "m6,analytics" \
 "## Why
@@ -1709,7 +1735,7 @@ curl 'http://localhost:8000/api/export/courses/1?format=csv&start=2026-06-01&end
 
 Closes #24"
 
-# ─── M7 Issues (#27-31) ─────────────────────────────────────────────────────
+# --- M7 Issues (#27-31) -----------------------------------------------------
 
 create_issue 27 "Build session engagement report" "$M7" "m7,analytics" \
 "## Why
@@ -1961,7 +1987,7 @@ python -m src.reports.email_sender --to test@nst.edu --report weekly --course-id
 
 Closes #27, Closes #28"
 
-# ─── M8 Issues (#32-35) ─────────────────────────────────────────────────────
+# --- M8 Issues (#32-35) -----------------------------------------------------
 
 create_issue 32 "Build student dashboard" "$M8" "m8,frontend" \
 "## Why
