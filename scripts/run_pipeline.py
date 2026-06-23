@@ -6,7 +6,14 @@ from src.pipeline.preprocessor import FramePreprocessor
 def main():
     # 1. Initialize Pipeline
     print("Initializing pipeline...")
-    cap = WebcamCapture(fps=15, resolution=(640, 480))
+    # cap = WebcamCapture(fps=15, resolution=(640, 480))
+    # Instead of cap = WebcamCapture(src=0)
+    # Use a source that definitely doesn't exist
+    # Change this:
+    # cap = WebcamCapture(src=999)
+
+# To this (0 is your default built-in webcam):
+    cap = WebcamCapture(src=0)
     cap.start()
     
     prep = FramePreprocessor(target_size=(640, 480))
