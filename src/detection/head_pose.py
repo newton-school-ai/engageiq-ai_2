@@ -1,6 +1,6 @@
 """Head pose estimation using MediaPipe landmarks + OpenCV solvePnP."""
 
-import numpy as np
+# import numpy as np
 
 
 def estimate_head_pose(
