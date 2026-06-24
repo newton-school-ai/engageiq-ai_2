@@ -3,7 +3,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+
 from src.config.settings import settings
+
+from src.api.websocket import router as websocket_router
+
 
 app = FastAPI(
     title="EngageIQ AI",
@@ -19,6 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(websocket_router) 
 
 @app.get("/health")
 def health_check():
