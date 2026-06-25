@@ -1,9 +1,14 @@
 from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import String, Boolean, DateTime, Enum as SQLEnum, func
+
+from sqlalchemy import Boolean, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.config.settings import PrivacyMode, UserRole
 from src.models.base import Base
-from src.config.settings import UserRole, PrivacyMode
+
 
 class User(Base):
     __tablename__ = "users"
@@ -13,14 +18,18 @@ class User(Base):
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     password: Mapped[str] = mapped_column("password", String, nullable=False)
     role: Mapped[UserRole] = mapped_column(SQLEnum(UserRole), nullable=False)
-    privacy_mode: Mapped[PrivacyMode] = mapped_column(SQLEnum(PrivacyMode), nullable=False)
+    privacy_mode: Mapped[PrivacyMode] = mapped_column(
+        SQLEnum(PrivacyMode), nullable=False
+    )
 
     avatar_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     google_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
 
     # Relationships
     taught_courses: Mapped[List["Course"]] = relationship(

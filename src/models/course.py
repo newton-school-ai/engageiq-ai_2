@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import String, Text, Boolean, DateTime, ForeignKey, func
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from src.models.base import Base
 
 
@@ -15,7 +17,9 @@ class Course(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
 
     # Relationships
     teacher: Mapped["User"] = relationship("User", back_populates="taught_courses")

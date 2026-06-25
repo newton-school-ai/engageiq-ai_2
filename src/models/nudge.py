@@ -1,7 +1,11 @@
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, Float, DateTime, ForeignKey, Enum as SQLEnum, func
+
+from sqlalchemy import DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import Float, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from src.models.base import Base
 from src.models.engagement_log import EngagementState
 
@@ -17,7 +21,9 @@ class Nudge(Base):
     )
 
     nudge_type: Mapped[str] = mapped_column(String, nullable=False)
-    triggered_state: Mapped[EngagementState] = mapped_column(SQLEnum(EngagementState), nullable=False)
+    triggered_state: Mapped[EngagementState] = mapped_column(
+        SQLEnum(EngagementState), nullable=False
+    )
     effectiveness_delta: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

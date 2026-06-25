@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import List, Optional
-from sqlalchemy import String, DateTime, ForeignKey, func
+
+from sqlalchemy import DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from src.models.base import Base
 
 
@@ -17,7 +19,9 @@ class Session(Base):
     status: Mapped[str] = mapped_column(String, nullable=False, default="scheduled")
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
 
     # Relationships
     course: Mapped["Course"] = relationship("Course", back_populates="sessions")
