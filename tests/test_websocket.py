@@ -4,6 +4,7 @@ Covers the three required cases: connection (with auth), frame
 processing (engagement score returned), and disconnect handling
 (graceful cleanup, no crash).
 """
+
 from __future__ import annotations
 
 import base64
@@ -41,9 +42,10 @@ class TestConnection:
     def test_connects_with_valid_token(self):
         """A valid session token should be accepted and registered in the manager."""
         token = make_token(sub="student-123")
-        with client.websocket_connect(f"/ws/session/test-session-1?token={token}") as ws:
+        with client.websocket_connect(
+            f"/ws/session/test-session-1?token={token}"
+        ):
             assert manager.is_connected("test-session-1")
-        # After the `with` block exits, the client disconnects.
 
     def test_rejects_missing_token(self):
         """No token query param should close the connection rather than accept it."""
@@ -55,7 +57,9 @@ class TestConnection:
         """An expired JWT should be rejected at connect time."""
         token = make_token(sub="student-123", expired=True)
         with pytest.raises(Exception):
-            with client.websocket_connect(f"/ws/session/test-session-3?token={token}") as ws:
+            with client.websocket_connect(
+                f"/ws/session/test-session-3?token={token}"
+            ) as ws:
                 ws.receive_text()
 
 
@@ -63,7 +67,9 @@ class TestFrameProcessing:
     def test_sends_engagement_score_after_frame(self):
         """Sending a frame should return a JSON message with an engagement_score."""
         token = make_token(sub="student-123")
-        with client.websocket_connect(f"/ws/session/test-session-4?token={token}") as ws:
+        with client.websocket_connect(
+            f"/ws/session/test-session-4?token={token}"
+        ) as ws:
             ws.send_text(make_frame_message(timestamp=1.0))
             response = json.loads(ws.receive_text())
 
@@ -75,7 +81,9 @@ class TestFrameProcessing:
     def test_engagement_score_within_valid_range(self):
         """Score should be within the documented 0-100 range given 0-100 inputs."""
         token = make_token(sub="student-123")
-        with client.websocket_connect(f"/ws/session/test-session-5?token={token}") as ws:
+        with client.websocket_connect(
+            f"/ws/session/test-session-5?token={token}"
+        ) as ws:
             ws.send_text(make_frame_message())
             response = json.loads(ws.receive_text())
 
@@ -84,7 +92,9 @@ class TestFrameProcessing:
     def test_malformed_message_returns_error_not_crash(self):
         """A bad payload should get an error response, not kill the connection."""
         token = make_token(sub="student-123")
-        with client.websocket_connect(f"/ws/session/test-session-6?token={token}") as ws:
+        with client.websocket_connect(
+            f"/ws/session/test-session-6?token={token}"
+        ) as ws:
             ws.send_text(json.dumps({"not_a_frame": True}))
             response = json.loads(ws.receive_text())
             assert "error" in response
@@ -99,7 +109,9 @@ class TestDisconnect:
     def test_cleans_up_on_disconnect(self):
         """Closing the connection should remove it from the ConnectionManager."""
         token = make_token(sub="student-123")
-        with client.websocket_connect(f"/ws/session/test-session-7?token={token}") as ws:
+        with client.websocket_connect(
+            f"/ws/session/test-session-7?token={token}"
+        ):
             assert manager.is_connected("test-session-7")
 
         assert not manager.is_connected("test-session-7")
@@ -110,7 +122,9 @@ class TestDisconnect:
         token_b = make_token(sub="student-b")
 
         with client.websocket_connect(f"/ws/session/session-a?token={token_a}") as ws_a:
-            with client.websocket_connect(f"/ws/session/session-b?token={token_b}") as ws_b:
+            with client.websocket_connect(
+                f"/ws/session/session-b?token={token_b}"
+            ):
                 assert manager.is_connected("session-a")
                 assert manager.is_connected("session-b")
 

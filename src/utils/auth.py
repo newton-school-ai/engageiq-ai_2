@@ -7,6 +7,7 @@ to match the tokens issued by #6 once that's merged. If #6 ends up using a
 different claim layout, update ``decode_session_token`` accordingly --
 callers (e.g. the websocket endpoint) should not need to change.
 """
+
 from __future__ import annotations
 
 import jwt

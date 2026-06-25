@@ -13,6 +13,7 @@ adapter call in ``_run_pipeline`` below should need updating -- the rest
 of the connection-handling, auth, and broadcast logic is independent of
 that detail.
 """
+
 from __future__ import annotations
 
 import base64
@@ -46,11 +47,15 @@ class ConnectionManager:
     async def connect(self, session_id: str, websocket: WebSocket) -> None:
         await websocket.accept()
         self._connections[session_id] = websocket
-        logger.info("session %s connected (%d active)", session_id, len(self._connections))
+        logger.info(
+            "session %s connected (%d active)", session_id, len(self._connections)
+        )
 
     def disconnect(self, session_id: str) -> None:
         self._connections.pop(session_id, None)
-        logger.info("session %s disconnected (%d active)", session_id, len(self._connections))
+        logger.info(
+            "session %s disconnected (%d active)", session_id, len(self._connections)
+        )
 
     async def send_json(self, session_id: str, payload: dict) -> None:
         """Push a message (engagement update, nudge event, ...) to one session."""
