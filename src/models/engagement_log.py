@@ -1,6 +1,11 @@
 import enum
 from datetime import datetime
-from typing import List
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.models.session import Session
+    from src.models.user import User
+    from src.models.nudge import Nudge
 
 from sqlalchemy import DateTime
 from sqlalchemy import Enum as SQLEnum

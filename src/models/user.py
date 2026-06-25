@@ -1,5 +1,11 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.models.course import Course, CourseEnrollment
+    from src.models.engagement_log import EngagementLog
+    from src.models.nudge import Nudge
+    from src.models.report import Report
 
 from sqlalchemy import Boolean, DateTime
 from sqlalchemy import Enum as SQLEnum

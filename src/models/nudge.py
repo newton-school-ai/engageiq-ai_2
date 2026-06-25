@@ -1,5 +1,10 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.models.session import Session
+    from src.models.user import User
+    from src.models.engagement_log import EngagementLog
 
 from sqlalchemy import DateTime
 from sqlalchemy import Enum as SQLEnum
