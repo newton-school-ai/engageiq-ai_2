@@ -42,9 +42,7 @@ class TestConnection:
     def test_connects_with_valid_token(self):
         """A valid session token should be accepted and registered in the manager."""
         token = make_token(sub="student-123")
-        with client.websocket_connect(
-            f"/ws/session/test-session-1?token={token}"
-        ):
+        with client.websocket_connect(f"/ws/session/test-session-1?token={token}"):
             assert manager.is_connected("test-session-1")
 
     def test_rejects_missing_token(self):
@@ -109,9 +107,7 @@ class TestDisconnect:
     def test_cleans_up_on_disconnect(self):
         """Closing the connection should remove it from the ConnectionManager."""
         token = make_token(sub="student-123")
-        with client.websocket_connect(
-            f"/ws/session/test-session-7?token={token}"
-        ):
+        with client.websocket_connect(f"/ws/session/test-session-7?token={token}"):
             assert manager.is_connected("test-session-7")
 
         assert not manager.is_connected("test-session-7")
@@ -122,9 +118,7 @@ class TestDisconnect:
         token_b = make_token(sub="student-b")
 
         with client.websocket_connect(f"/ws/session/session-a?token={token_a}") as ws_a:
-            with client.websocket_connect(
-                f"/ws/session/session-b?token={token_b}"
-            ):
+            with client.websocket_connect(f"/ws/session/session-b?token={token_b}"):
                 assert manager.is_connected("session-a")
                 assert manager.is_connected("session-b")
 
