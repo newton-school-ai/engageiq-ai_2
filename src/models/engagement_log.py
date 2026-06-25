@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     from src.models.session import Session
