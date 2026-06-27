@@ -8,8 +8,7 @@ from src.api.schemas.user import GoogleAuthRequest, TokenResponse
 from src.config.database import get_db
 from src.config.settings import settings
 from src.models.user import User
-from src.utils.auth import (create_access_token, create_refresh_token,
-                            verify_token)
+from src.utils.auth import create_access_token, create_refresh_token, verify_token
 
 router = APIRouter(
     prefix="/api/auth",
