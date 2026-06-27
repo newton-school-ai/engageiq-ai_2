@@ -10,12 +10,14 @@ callers (e.g. the websocket endpoint) should not need to change.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
 import jwt
 from jwt import PyJWTError
 
 from src.config.settings import settings
 
-ALGORITHM = "HS256"
+ALGORITHM = settings.jwt_algorithm
 
 
 class InvalidSessionToken(Exception):
@@ -58,3 +60,61 @@ def verify_session_token(token: str) -> str:
     """
     payload = decode_session_token(token)
     return payload["sub"]
+
+
+def create_access_token(data: dict) -> str:
+    """Create a JWT access token."""
+
+    payload = data.copy()
+    now = datetime.now(timezone.utc)
+
+    payload.update(
+        {
+            "iat": now,
+            "exp": now + timedelta(minutes=settings.access_token_expire_minutes),
+            "type": "access",
+        }
+    )
+
+    return jwt.encode(
+        payload,
+        settings.secret_key,
+        algorithm=ALGORITHM,
+    )
+
+
+def create_refresh_token(data: dict) -> str:
+    """Create a JWT refresh token."""
+
+    payload = data.copy()
+    now = datetime.now(timezone.utc)
+
+    payload.update(
+        {
+            "iat": now,
+            "exp": now + timedelta(days=settings.refresh_token_expire_days),
+            "type": "refresh",
+        }
+    )
+
+    return jwt.encode(
+        payload,
+        settings.secret_key,
+        algorithm=ALGORITHM,
+    )
+
+
+def decode_token(token: str) -> dict:
+    """Decode any JWT token."""
+    return decode_session_token(token)
+
+
+def verify_token(token: str, token_type: str = "access") -> dict:
+    """Verify JWT type and validity."""
+
+    payload = decode_token(token)
+
+    if payload.get("type") != token_type:
+        raise InvalidSessionToken("Invalid token type")
+
+    return payload

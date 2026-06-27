@@ -50,6 +50,18 @@ class Settings(BaseSettings):
     app_port: int = 8000
     debug: bool = True
     secret_key: str = "change_this_in_production"
+
+    # Google OAuth
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = "http://localhost:5173"
+
+    # Authentication
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 1440
+    refresh_token_expire_days: int = 7
+
+    # Frontend
     frontend_url: str = "http://localhost:5173"
 
     class Config:

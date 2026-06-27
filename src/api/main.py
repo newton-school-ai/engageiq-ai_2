@@ -3,6 +3,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.api.routes.auth import router as auth_router
+from src.api.routes.courses import router as courses_router
+from src.api.routes.users import router as users_router
 from src.api.websocket import router as websocket_router
 from src.config.settings import settings
 
@@ -21,15 +24,12 @@ app.add_middleware(
 )
 
 app.include_router(websocket_router)
+app.include_router(auth_router)
+app.include_router(users_router)
+app.include_router(courses_router)
 
 
 @app.get("/health")
 def health_check():
     """Health check endpoint."""
     return {"status": "ok", "version": "0.1.0"}
-
-
-# TODO: Include route modules
-# from src.api.routes import users, courses, sessions, engagement, reports
-# app.include_router(users.router, prefix="/api")
-# app.include_router(courses.router, prefix="/api")
