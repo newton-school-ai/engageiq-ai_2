@@ -22,15 +22,31 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
-    password: Mapped[str] = mapped_column("password", String, nullable=False)
-    role: Mapped[UserRole] = mapped_column(SQLEnum(UserRole), nullable=False)
-    privacy_mode: Mapped[PrivacyMode] = mapped_column(
-        SQLEnum(PrivacyMode), nullable=False
+
+    password: Mapped[Optional[str]] = mapped_column(
+        "password",
+        String,
+        nullable=True,
+    )
+
+    role: Mapped[Optional[UserRole]] = mapped_column(
+        SQLEnum(UserRole),
+        nullable=True,
+    )
+
+    privacy_mode: Mapped[Optional[PrivacyMode]] = mapped_column(
+        SQLEnum(PrivacyMode),
+        nullable=True,
     )
 
     avatar_url: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     google_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    auth_provider: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        default="google",
+    )
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
