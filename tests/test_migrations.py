@@ -2,18 +2,18 @@ import pytest
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker
 
+from src.config.settings import PrivacyMode, UserRole
 from src.models import (
     Base,
-    User,
     Course,
     CourseEnrollment,
-    Session,
     EngagementLog,
     EngagementState,
     Nudge,
     Report,
+    Session,
+    User,
 )
-from src.config.settings import UserRole, PrivacyMode
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
 
@@ -39,8 +39,8 @@ def db(engine):
 @pytest.fixture(scope="module")
 def seeded_db(db):
     """Populate DB with the same data as scripts/seed.py."""
-    from datetime import datetime, timedelta
     import random
+    from datetime import datetime, timedelta
 
     # Teachers
     teachers = [
