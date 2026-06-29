@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 
 from src.config.settings import PrivacyMode, UserRole
