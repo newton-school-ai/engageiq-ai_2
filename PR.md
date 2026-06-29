@@ -42,3 +42,9 @@ Implemented Google OAuth authentication with JWT-based access and refresh tokens
 
 ---
 
+## Issue 7
+**By:** Yuvraj and Ayush
+
+This issue focused on setting up the initial database migrations and seeding script. We created the alembic.ini configuration file, verified the existing env.py was correctly pointing to our SQLAlchemy models and database URL, and generated the initial migration. We also fixed the seed script to add idempotency so running it twice does not create duplicate data.
+
+---
