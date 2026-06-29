@@ -27,12 +27,12 @@ def seed_database():
     print(f"Connecting to database: {settings.database_url}")
     engine = create_engine(settings.database_url)
 
-    # Clear existing data and recreate tables to ensure a clean slate
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
 
     SessionLocal = sessionmaker(bind=engine)
     with SessionLocal() as session:
+        if session.query(User).first():
+            print("Database already seeded. Skipping...")
+            return
         print("Seeding Users...")
         # Create 2 Teachers
         teachers = [
