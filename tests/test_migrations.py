@@ -15,8 +15,8 @@ from src.models import (
 )
 from src.config.settings import UserRole, PrivacyMode
 
-
 # ── Fixtures ───────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture(scope="module")
 def engine():
@@ -84,28 +84,51 @@ def seeded_db(db):
     # Enrollments
     for student in students:
         for course in random.sample(courses, k=random.randint(1, 3)):
-            db.add(CourseEnrollment(course_id=course.id, user_id=student.id, is_active=True))
+            db.add(
+                CourseEnrollment(
+                    course_id=course.id, user_id=student.id, is_active=True
+                )
+            )
     db.commit()
 
     # Sessions
     now = datetime.now()
     sessions = [
-        Session(course_id=courses[0].id, title="Python Basics 1",
-                start_time=now - timedelta(days=2),
-                end_time=now - timedelta(days=2) + timedelta(hours=1),
-                status="completed"),
-        Session(course_id=courses[0].id, title="Python Basics 2",
-                start_time=now - timedelta(days=1),
-                end_time=now - timedelta(days=1) + timedelta(hours=1),
-                status="completed"),
-        Session(course_id=courses[1].id, title="Arrays and Lists",
-                start_time=now - timedelta(hours=5),
-                end_time=now - timedelta(hours=4),
-                status="completed"),
-        Session(course_id=courses[1].id, title="Trees and Graphs",
-                start_time=now, end_time=None, status="active"),
-        Session(course_id=courses[2].id, title="Linear Regression",
-                start_time=now + timedelta(days=1), end_time=None, status="scheduled"),
+        Session(
+            course_id=courses[0].id,
+            title="Python Basics 1",
+            start_time=now - timedelta(days=2),
+            end_time=now - timedelta(days=2) + timedelta(hours=1),
+            status="completed",
+        ),
+        Session(
+            course_id=courses[0].id,
+            title="Python Basics 2",
+            start_time=now - timedelta(days=1),
+            end_time=now - timedelta(days=1) + timedelta(hours=1),
+            status="completed",
+        ),
+        Session(
+            course_id=courses[1].id,
+            title="Arrays and Lists",
+            start_time=now - timedelta(hours=5),
+            end_time=now - timedelta(hours=4),
+            status="completed",
+        ),
+        Session(
+            course_id=courses[1].id,
+            title="Trees and Graphs",
+            start_time=now,
+            end_time=None,
+            status="active",
+        ),
+        Session(
+            course_id=courses[2].id,
+            title="Linear Regression",
+            start_time=now + timedelta(days=1),
+            end_time=None,
+            status="scheduled",
+        ),
     ]
     db.add_all(sessions)
     db.commit()
@@ -133,38 +156,45 @@ def seeded_db(db):
                 db.commit()
 
                 if state in (EngagementState.DISTRACTED, EngagementState.DROWSY):
-                    db.add(Nudge(
-                        session_id=sess.id,
-                        user_id=enrollment.user_id,
-                        engagement_log_id=log.id,
-                        nudge_type="pop-up",
-                        triggered_state=state,
-                        effectiveness_delta=round(random.uniform(-0.2, 0.8), 2),
-                    ))
+                    db.add(
+                        Nudge(
+                            session_id=sess.id,
+                            user_id=enrollment.user_id,
+                            engagement_log_id=log.id,
+                            nudge_type="pop-up",
+                            triggered_state=state,
+                            effectiveness_delta=round(random.uniform(-0.2, 0.8), 2),
+                        )
+                    )
     db.commit()
 
     # Reports
     for sess in [s for s in sessions if s.status == "completed"]:
         enrolled = db.query(CourseEnrollment).filter_by(course_id=sess.course_id).all()
         for enrollment in enrolled:
-            db.add(Report(
+            db.add(
+                Report(
+                    session_id=sess.id,
+                    user_id=enrollment.user_id,
+                    report_type="student_personal",
+                    content_json={"avg_engagement_score": 0.75},
+                )
+            )
+        db.add(
+            Report(
                 session_id=sess.id,
-                user_id=enrollment.user_id,
-                report_type="student_personal",
-                content_json={"avg_engagement_score": 0.75},
-            ))
-        db.add(Report(
-            session_id=sess.id,
-            user_id=None,
-            report_type="class_summary",
-            content_json={"avg_engagement_score": 0.70},
-        ))
+                user_id=None,
+                report_type="class_summary",
+                content_json={"avg_engagement_score": 0.70},
+            )
+        )
     db.commit()
 
     return db
 
 
 # ── Migration tests ────────────────────────────────────────────────────────────
+
 
 class TestMigrations:
 
@@ -181,27 +211,51 @@ class TestMigrations:
     def test_all_tables_created(self, engine):
         """alembic upgrade head creates all expected tables."""
         actual = set(inspect(engine).get_table_names())
-        assert self.EXPECTED_TABLES.issubset(actual), (
-            f"Missing tables: {self.EXPECTED_TABLES - actual}"
-        )
+        assert self.EXPECTED_TABLES.issubset(
+            actual
+        ), f"Missing tables: {self.EXPECTED_TABLES - actual}"
 
     def test_users_columns(self, engine):
         cols = {c["name"] for c in inspect(engine).get_columns("users")}
-        expected = {"id", "name", "email", "role", "privacy_mode",
-                    "is_active", "google_id", "created_at", "updated_at"}
+        expected = {
+            "id",
+            "name",
+            "email",
+            "role",
+            "privacy_mode",
+            "is_active",
+            "google_id",
+            "created_at",
+            "updated_at",
+        }
         assert expected.issubset(cols)
 
     def test_engagement_logs_columns(self, engine):
         cols = {c["name"] for c in inspect(engine).get_columns("engagement_logs")}
-        expected = {"id", "session_id", "user_id", "timestamp",
-                    "engagement_score", "state", "drowsiness_count",
-                    "distracted_count", "phone_detected_count"}
+        expected = {
+            "id",
+            "session_id",
+            "user_id",
+            "timestamp",
+            "engagement_score",
+            "state",
+            "drowsiness_count",
+            "distracted_count",
+            "phone_detected_count",
+        }
         assert expected.issubset(cols)
 
     def test_nudges_columns(self, engine):
         cols = {c["name"] for c in inspect(engine).get_columns("nudges")}
-        expected = {"id", "session_id", "user_id", "engagement_log_id",
-                    "triggered_state", "effectiveness_delta", "created_at"}
+        expected = {
+            "id",
+            "session_id",
+            "user_id",
+            "engagement_log_id",
+            "triggered_state",
+            "effectiveness_delta",
+            "created_at",
+        }
         assert expected.issubset(cols)
 
     def test_downgrade_drops_all_tables(self):
@@ -214,6 +268,7 @@ class TestMigrations:
 
 
 # ── Seed data tests ────────────────────────────────────────────────────────────
+
 
 class TestSeedData:
 
@@ -246,7 +301,9 @@ class TestSeedData:
         assert count > 0, "Expected reports to exist"
 
     def test_student_personal_reports_have_user_id(self, seeded_db):
-        reports = seeded_db.query(Report).filter_by(report_type="student_personal").all()
+        reports = (
+            seeded_db.query(Report).filter_by(report_type="student_personal").all()
+        )
         assert all(r.user_id is not None for r in reports)
 
     def test_class_summary_reports_have_no_user_id(self, seeded_db):
