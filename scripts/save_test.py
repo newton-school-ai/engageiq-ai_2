@@ -1,11 +1,13 @@
-import time # <--- This was missing!
+import time  # <--- This was missing!
+
 import cv2
+
 from src.pipeline.capture import WebcamCapture
 
 # Now your script will work
 cap = WebcamCapture()
 cap.start()
-time.sleep(1) 
+time.sleep(1)
 
 raw_frame, _ = cap.read()
 if raw_frame is not None:

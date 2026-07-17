@@ -8,7 +8,7 @@ class TemporalFilter:
 
     def __init__(self, window_size: int = 30):
         self.window_size = window_size
-        self._buffer = deque(maxlen=window_size)
+        self._buffer: deque[float] = deque(maxlen=window_size)
 
     def smooth(self, score: float) -> float:
         """Add score to buffer and return smoothed value.

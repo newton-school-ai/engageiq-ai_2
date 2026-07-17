@@ -1,6 +1,6 @@
-import sys
 import os
 import random
+import sys
 from datetime import datetime, timedelta
 
 # Add the project root to the python path
@@ -9,24 +9,23 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.config.settings import settings, UserRole, PrivacyMode
+from src.config.settings import PrivacyMode, UserRole, settings
 from src.models import (
     Base,
-    User,
     Course,
     CourseEnrollment,
-    Session,
     EngagementLog,
     EngagementState,
     Nudge,
     Report,
+    Session,
+    User,
 )
 
 
 def seed_database():
     print(f"Connecting to database: {settings.database_url}")
     engine = create_engine(settings.database_url)
-
 
     SessionLocal = sessionmaker(bind=engine)
     with SessionLocal() as session:
@@ -142,7 +141,9 @@ def seed_database():
         for s in past_sessions:
             enrolled_students = [
                 e.student
-                for e in session.query(CourseEnrollment).filter_by(course_id=s.course_id).all()
+                for e in session.query(CourseEnrollment)
+                .filter_by(course_id=s.course_id)
+                .all()
             ]
             for student in enrolled_students:
                 # 5 logs per student per session
@@ -162,10 +163,24 @@ def seed_database():
                         timestamp=log_time,
                         engagement_score=random.uniform(0.1, 1.0),
                         state=state,
-                        drowsiness_count=random.randint(1, 5) if state == EngagementState.DROWSY else 0,
-                        distracted_count=random.randint(1, 5) if state == EngagementState.DISTRACTED else 0,
-                        negative_expression_count=random.randint(1, 5) if is_bad_state else 0,
-                        phone_detected_count=random.randint(0, 2) if state == EngagementState.DISTRACTED else 0,
+                        drowsiness_count=(
+                            random.randint(1, 5)
+                            if state == EngagementState.DROWSY
+                            else 0
+                        ),
+                        distracted_count=(
+                            random.randint(1, 5)
+                            if state == EngagementState.DISTRACTED
+                            else 0
+                        ),
+                        negative_expression_count=(
+                            random.randint(1, 5) if is_bad_state else 0
+                        ),
+                        phone_detected_count=(
+                            random.randint(0, 2)
+                            if state == EngagementState.DISTRACTED
+                            else 0
+                        ),
                     )
                     session.add(log)
                     session.commit()
@@ -187,7 +202,9 @@ def seed_database():
         for s in completed_sessions:
             enrolled_students = [
                 e.student
-                for e in session.query(CourseEnrollment).filter_by(course_id=s.course_id).all()
+                for e in session.query(CourseEnrollment)
+                .filter_by(course_id=s.course_id)
+                .all()
             ]
             for student in enrolled_students:
                 report = Report(
