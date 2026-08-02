@@ -1,8 +1,8 @@
 """Tests for session report generator — Issue #27."""
 
-import pytest
 from datetime import datetime, timedelta, timezone
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -10,14 +10,11 @@ from src.config.settings import PrivacyMode, UserRole
 from src.models import Base
 from src.models.course import Course, CourseEnrollment
 from src.models.engagement_log import EngagementLog, EngagementState
-from src.models.report import Report
 from src.models.session import Session as SessionModel
 from src.models.user import User
 from src.reports.session_report import (
     DistractionMoment,
-    SessionReportData,
     SessionReportGenerator,
-    StateDistributionEntry,
 )
 
 
