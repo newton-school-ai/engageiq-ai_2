@@ -258,3 +258,38 @@ This issue was about automating email delivery for engagement reports so teacher
 
 ---
 
+## Issue 32
+**By:** Aparna Singh
+
+This issue was about building the student-facing dashboard that brings together engagement analytics into a single interface. I implemented the main `StudentDashboard` page along with reusable components for engagement history, focus streaks, session history, and personalized improvement tips.
+
+The dashboard fetches student analytics from the backend API, supports loading, error, and empty states, and uses a responsive grid layout for tablet and desktop screens. The engagement chart displays the most recent seven sessions with interactive visualization, the focus streak calculates consecutive sessions above the engagement threshold, the session history presents recent learning activity in chronological order, and the improvement tips panel displays personalized recommendations with accessible, defensive rendering.
+
+The components were designed with accessibility, responsive layouts, defensive handling of missing data, and reusable React patterns using hooks such as `useMemo`, `useCallback`, and `useEffect`. Since the repository currently does not include the frontend build configuration (`package.json` or Vite/React setup), runtime verification using `npm run dev` could not be performed. The implementation was therefore completed according to the project structure and issue requirements.
+
+---
+
+## Issue 33
+**By:** Ayush Aryan
+
+This issue was about building the Teacher Dashboard,  the single screen where every analytics feature we've built finally meets a real teacher. During a live lecture, a teacher needs to see at a glance how engaged the class is right now, who's slipping, and what to actually do about it, without jumping between ten different tools.
+
+To build it, I created a React dashboard that brings the live engagement stream, class analytics, at-risk detection, and the intervention agent together in one view:
+
+1. **Class Overview (`ClassOverview.jsx`):** A simple course picker plus the headline numbers — how many students are in the class and the class's average engagement. Switching courses updates everything instantly.
+
+2. **Live Engagement (`LiveEngagement.jsx`):** A real-time line graph that reads the engagement score over a WebSocket and redraws every 2 seconds. It tries the real backend stream first (`ws://localhost:8000/ws/session/{id}`) and, if the backend isn't running, quietly falls back to a local demo stream so the graph keeps moving. It also auto-reconnects if the connection drops.
+
+3. **Session History + Report (`TeacherDashboard.jsx`):** A list of past lectures; clicking one opens that session's report — average engagement, duration, the breakdown of engaged / passive / distracted / drowsy / confused states, and the top issues spotted in that lecture.
+
+4. **At-Risk Students (`AtRiskPanel.jsx`):** Shows the students who need attention, but only as anonymized IDs (e.g. `anon_3f9a2c1b04`) with a ▲/▼ arrow so the teacher sees whether each is improving or declining — no raw student identity is ever shown.
+
+5. **Intervention Suggestions (`InterventionPanel.jsx`):** The AI's teaching tips for the current moment (e.g. "pause for a 60-second think-pair-share"), pulled from the intervention agent.
+
+I also handled the boring-but-important parts: a loading state while data loads, empty states when there's nothing to show, and a responsive layout that collapses from two columns to one on a tablet.
+
+**A note on the data (important):** for now the dashboard runs on a built-in **demo-data layer**, not live data. The reason is that the ingestion pipeline (webcam capture #4 is still a stub) and the analytics that feed these panels class aggregation (#24), risk identification (#25), and the intervention agent (#29) haven't been exposed through API endpoints yet. So instead of waiting, I built the dashboard against the *real data shapes* those modules will produce, and fed it realistic dummy data. The payoff is that swapping to live data later is a drop-in: there's one file (`src/lib/dashboardData.js`) that every panel reads from, so when the backend is ready we just point that file at the real endpoints and change nothing in the components. The live graph is already future-proof — it prefers the real WebSocket and only simulates when the backend is offline. No component rewrites needed when the real pipeline lands.
+
+
+---
+
