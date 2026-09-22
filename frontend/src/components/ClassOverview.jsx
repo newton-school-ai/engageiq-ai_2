@@ -1,24 +1,50 @@
-// ClassOverview.jsx — class summary (#33, AC #1)
+// ClassOverview.jsx — class summary (#33, AC #1), responsive (#34)
 // Course selector + student count + average engagement.
 
 import { DEMO_COURSES, getClassOverview } from "../lib/dashboardData";
 
+const AVG_COLOR = {
+  good: "text-green-600",
+  ok: "text-amber-500",
+  bad: "text-red-600",
+};
+const AVG_BAR = {
+  good: "bg-green-600",
+  ok: "bg-amber-500",
+  bad: "bg-red-600",
+};
+
+function avgTier(v) {
+  if (v >= 70) return "good";
+  if (v >= 50) return "ok";
+  return "bad";
+}
+
 export default function ClassOverview({ courseId, onSelectCourse }) {
   const overview = getClassOverview(courseId);
   const avg = overview.averageEngagement;
+  const tier = avgTier(avg);
 
   return (
-    <div style={styles.card} aria-label="Class overview">
-      <h3 style={styles.h3}>Class Overview</h3>
+    <div
+      className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 shadow-sm"
+      aria-label="Class overview"
+    >
+      <h3 className="text-base font-semibold text-gray-900 mb-3">
+        Class Overview
+      </h3>
 
-      <label style={styles.label} htmlFor="course-select">
+      <label
+        className="text-xs text-gray-500 block mb-1"
+        htmlFor="course-select"
+      >
         Course
       </label>
       <select
         id="course-select"
-        style={styles.select}
         value={courseId}
         onChange={(e) => onSelectCourse(Number(e.target.value))}
+        className="w-full min-h-touch px-3 rounded-lg border border-gray-300 text-sm mb-4"
       >
         {DEMO_COURSES.map((c) => (
           <option key={c.id} value={c.id}>
@@ -27,69 +53,28 @@ export default function ClassOverview({ courseId, onSelectCourse }) {
         ))}
       </select>
 
-      <div style={styles.stats}>
-        <div style={styles.stat}>
-          <div style={styles.statValue}>{overview.studentCount}</div>
-          <div style={styles.statLabel}>Students</div>
+      <div className="flex gap-6">
+        <div className="flex-1">
+          <div className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+            {overview.studentCount}
+          </div>
+          <div className="text-xs text-gray-500">Students</div>
         </div>
-        <div style={styles.stat}>
-          <div style={{ ...styles.statValue, color: avgColor(avg) }}>
+        <div className="flex-1">
+          <div className={`text-2xl sm:text-3xl font-extrabold ${AVG_COLOR[tier]}`}>
             {avg}%
           </div>
-          <div style={styles.statLabel}>Avg Engagement</div>
+          <div className="text-xs text-gray-500">Avg Engagement</div>
         </div>
       </div>
 
-      {/* progress bar for avg engagement */}
-      <div style={styles.barTrack}>
+      <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
         <div
-          style={{
-            ...styles.barFill,
-            width: `${avg}%`,
-            background: avgColor(avg),
-          }}
+          className={`h-full rounded-full transition-all duration-500 ${AVG_BAR[tier]}`}
+          style={{ width: `${avg}%` }}
         />
       </div>
-      <p style={styles.subtitle}>{overview.courseName}</p>
+      <p className="text-xs text-gray-400 mt-2 mb-0">{overview.courseName}</p>
     </div>
   );
 }
-
-function avgColor(v) {
-  if (v >= 70) return "#16a34a";
-  if (v >= 50) return "#f59e0b";
-  return "#dc2626";
-}
-
-const styles = {
-  card: {
-    background: "#fff",
-    border: "1px solid #e5e7eb",
-    borderRadius: 12,
-    padding: 16,
-    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-  },
-  h3: { margin: "0 0 12px", fontSize: 16, color: "#111827" },
-  label: { fontSize: 12, color: "#6b7280", display: "block", marginBottom: 4 },
-  select: {
-    width: "100%",
-    padding: "8px 10px",
-    borderRadius: 8,
-    border: "1px solid #d1d5db",
-    fontSize: 14,
-    marginBottom: 14,
-  },
-  stats: { display: "flex", gap: 24 },
-  stat: { flex: 1 },
-  statValue: { fontSize: 28, fontWeight: 800, color: "#111827" },
-  statLabel: { fontSize: 12, color: "#6b7280" },
-  barTrack: {
-    marginTop: 12,
-    height: 8,
-    background: "#f3f4f6",
-    borderRadius: 999,
-    overflow: "hidden",
-  },
-  barFill: { height: "100%", borderRadius: 999, transition: "width 0.4s ease" },
-  subtitle: { fontSize: 12, color: "#9ca3af", marginTop: 8, marginBottom: 0 },
-};

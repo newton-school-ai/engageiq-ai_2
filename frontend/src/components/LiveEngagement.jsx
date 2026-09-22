@@ -1,4 +1,5 @@
-// LiveEngagement.jsx — real-time engagement graph (#33, AC #2 + #6)
+// LiveEngagement.jsx — real-time engagement graph (#33, AC #2 + #6),
+// responsive + touch-friendly tooltip (#34)
 //
 // Reads the live engagement stream via connectLiveStream (real backend
 // WebSocket when available, local 2s simulator otherwise) and renders a
@@ -14,30 +15,29 @@ const W = 640;
 const H = 220;
 const PAD = 28;
 
+const xFor = (i) => PAD + i * ((W - PAD * 2) / Math.max(1, MAX_POINTS - 1));
+const yFor = (s) => H - PAD - (s / 100) * (H - PAD * 2);
+
 function buildPath(scores) {
   if (scores.length === 0) return "";
-  const stepX = (W - PAD * 2) / Math.max(1, MAX_POINTS - 1);
-  const yFor = (s) => H - PAD - (s / 100) * (H - PAD * 2);
   return scores
-    .map((s, i) => {
-      const x = PAD + i * stepX;
-      const y = yFor(s);
-      return `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)}`;
-    })
+    .map((s, i) => `${i === 0 ? "M" : "L"}${xFor(i).toFixed(1)},${yFor(s).toFixed(1)}`)
     .join(" ");
 }
 
 const STATUS_LABEL = {
-  live: { text: "LIVE", color: "#16a34a" },
-  reconnecting: { text: "RECONNECTING", color: "#f59e0b" },
-  simulated: { text: "DEMO STREAM", color: "#6366f1" },
+  live: { text: "LIVE", className: "bg-green-600" },
+  reconnecting: { text: "RECONNECTING", className: "bg-amber-500" },
+  simulated: { text: "DEMO STREAM", className: "bg-indigo-500" },
 };
 
 export default function LiveEngagement({ sessionId = 101 }) {
   const [scores, setScores] = useState([]);
   const [status, setStatus] = useState("reconnecting");
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [hoverIndex, setHoverIndex] = useState(null);
   const cleanupRef = useRef(null);
+  const svgRef = useRef(null);
 
   useEffect(() => {
     setScores([]);
@@ -45,10 +45,7 @@ export default function LiveEngagement({ sessionId = 101 }) {
     cleanupRef.current = connectLiveStream(sessionId, {
       onStatus: setStatus,
       onScore: (s) => {
-        setScores((prev) => {
-          const next = [...prev, s];
-          return next.slice(-MAX_POINTS);
-        });
+        setScores((prev) => [...prev, s].slice(-MAX_POINTS));
         setLastUpdate(new Date());
       },
     });
@@ -60,119 +57,143 @@ export default function LiveEngagement({ sessionId = 101 }) {
   const current = scores.length ? scores[scores.length - 1] : null;
   const badge = STATUS_LABEL[status] || STATUS_LABEL.simulated;
 
+  // Touch/mouse -> nearest point index, for the tooltip. Works for both
+  // pointer types via onPointerMove/onPointerDown (touch-friendly per AC).
+  const updateHoverFromClientX = (clientX) => {
+    if (!svgRef.current || scores.length === 0) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const relX = ((clientX - rect.left) / rect.width) * W;
+    const step = (W - PAD * 2) / Math.max(1, MAX_POINTS - 1);
+    const idx = Math.round((relX - PAD) / step);
+    setHoverIndex(Math.max(0, Math.min(scores.length - 1, idx)));
+  };
+
   return (
     <div
-      style={styles.card}
+      className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 shadow-sm"
       role="region"
       aria-label="Live engagement graph"
     >
-      <div style={styles.header}>
-        <h3 style={styles.h3}>Live Engagement</h3>
-        <span style={{ ...styles.badge, background: badge.color }}>
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-semibold text-gray-900">
+          Live Engagement
+        </h3>
+        <span
+          className={`text-white text-[11px] font-bold tracking-wide px-2 py-1 rounded-full ${badge.className}`}
+        >
           {badge.text}
         </span>
       </div>
 
-      <div style={styles.readout}>
-        <span style={styles.score}>
+      <div className="flex items-baseline gap-2 my-2 flex-wrap">
+        <span className="text-3xl font-extrabold text-indigo-600">
           {current !== null ? current.toFixed(1) : "—"}
         </span>
-        <span style={styles.scoreLabel}>current score / 100</span>
+        <span className="text-xs text-gray-500">current score / 100</span>
         {lastUpdate && (
-          <span style={styles.lastUpdate}>
+          <span className="text-[11px] text-gray-400 ml-auto">
             updated {lastUpdate.toLocaleTimeString()}
           </span>
         )}
       </div>
 
       {scores.length === 0 ? (
-        <div style={styles.loading}>Connecting to live stream…</div>
+        <div className="h-[220px] flex items-center justify-center text-gray-400 text-sm">
+          Connecting to live stream…
+        </div>
       ) : (
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          width="100%"
-          height={H}
-          preserveAspectRatio="xMidYMid meet"
-          style={{ display: "block" }}
-        >
-          {/* gridlines every 25 */}
-          {[0, 25, 50, 75, 100].map((g) => {
-            const y = H - PAD - (g / 100) * (H - PAD * 2);
-            return (
-              <g key={g}>
-                <line
-                  x1={PAD}
-                  y1={y}
-                  x2={W - PAD}
-                  y2={y}
-                  stroke="#e5e7eb"
-                  strokeWidth="1"
-                />
-                <text x={4} y={y + 4} fontSize="10" fill="#9ca3af">
-                  {g}
-                </text>
-              </g>
-            );
-          })}
-          {/* the live line */}
-          {scores.length > 1 && (
-            <path
-              d={buildPath(scores)}
-              fill="none"
-              stroke="#6366f1"
-              strokeWidth="2.5"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-          )}
-          {/* leading dot */}
-          {scores.length > 0 && (
+        <div className="relative">
+          <svg
+            ref={svgRef}
+            viewBox={`0 0 ${W} ${H}`}
+            width="100%"
+            height="auto"
+            style={{ aspectRatio: `${W} / ${H}` }}
+            preserveAspectRatio="xMidYMid meet"
+            className="block touch-none"
+            onPointerMove={(e) => updateHoverFromClientX(e.clientX)}
+            onPointerDown={(e) => updateHoverFromClientX(e.clientX)}
+            onPointerLeave={() => setHoverIndex(null)}
+          >
+            {/* gridlines every 25 */}
+            {[0, 25, 50, 75, 100].map((g) => {
+              const y = yFor(g);
+              return (
+                <g key={g}>
+                  <line x1={PAD} y1={y} x2={W - PAD} y2={y} stroke="#e5e7eb" strokeWidth="1" />
+                  <text x={4} y={y + 4} fontSize="11" fill="#9ca3af">
+                    {g}
+                  </text>
+                </g>
+              );
+            })}
+
+            {scores.length > 1 && (
+              <path
+                d={buildPath(scores)}
+                fill="none"
+                stroke="#6366f1"
+                strokeWidth="2.5"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            )}
+
+            {/* leading dot */}
             <circle
-              cx={PAD + (scores.length - 1) * ((W - PAD * 2) / Math.max(1, MAX_POINTS - 1))}
-              cy={H - PAD - (scores[scores.length - 1] / 100) * (H - PAD * 2)}
+              cx={xFor(scores.length - 1)}
+              cy={yFor(scores[scores.length - 1])}
               r="4"
               fill="#4f46e5"
             />
-          )}
-        </svg>
+
+            {/* touch-friendly tooltip: vertical guide + dot + value label */}
+            {hoverIndex !== null && scores[hoverIndex] !== undefined && (
+              <g pointerEvents="none">
+                <line
+                  x1={xFor(hoverIndex)}
+                  y1={PAD}
+                  x2={xFor(hoverIndex)}
+                  y2={H - PAD}
+                  stroke="#c7d2fe"
+                  strokeWidth="1"
+                  strokeDasharray="3 3"
+                />
+                <circle
+                  cx={xFor(hoverIndex)}
+                  cy={yFor(scores[hoverIndex])}
+                  r="5"
+                  fill="#4f46e5"
+                  stroke="#fff"
+                  strokeWidth="2"
+                />
+                <rect
+                  x={Math.min(Math.max(xFor(hoverIndex) - 24, 2), W - 50)}
+                  y={Math.max(yFor(scores[hoverIndex]) - 28, 2)}
+                  width="48"
+                  height="20"
+                  rx="5"
+                  fill="#111827"
+                />
+                <text
+                  x={Math.min(Math.max(xFor(hoverIndex), 26), W - 26)}
+                  y={Math.max(yFor(scores[hoverIndex]) - 14, 16)}
+                  fontSize="11"
+                  fill="#fff"
+                  textAnchor="middle"
+                >
+                  {scores[hoverIndex].toFixed(0)}
+                </text>
+              </g>
+            )}
+          </svg>
+        </div>
       )}
-      <p style={styles.note}>
-        Updates every 2s. Auto-reconnects on disconnect; falls back to a local
-        demo stream when the backend is offline.
+      <p className="text-[11px] text-gray-400 mt-2 mb-0">
+        Updates every 2s. Auto-reconnects on disconnect; falls back to a
+        local demo stream when the backend is offline. Tap or drag across
+        the chart to inspect a point.
       </p>
     </div>
   );
 }
-
-const styles = {
-  card: {
-    background: "#fff",
-    border: "1px solid #e5e7eb",
-    borderRadius: 12,
-    padding: 16,
-    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-  },
-  header: { display: "flex", alignItems: "center", justifyContent: "space-between" },
-  h3: { margin: 0, fontSize: 16, color: "#111827" },
-  badge: {
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: 0.5,
-    padding: "3px 8px",
-    borderRadius: 999,
-  },
-  readout: { display: "flex", alignItems: "baseline", gap: 8, margin: "8px 0" },
-  score: { fontSize: 32, fontWeight: 800, color: "#4f46e5" },
-  scoreLabel: { fontSize: 12, color: "#6b7280" },
-  lastUpdate: { fontSize: 11, color: "#9ca3af", marginLeft: "auto" },
-  loading: {
-    height: H,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#9ca3af",
-    fontSize: 14,
-  },
-  note: { fontSize: 11, color: "#9ca3af", marginTop: 8, marginBottom: 0 },
-};

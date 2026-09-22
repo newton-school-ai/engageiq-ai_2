@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Prevent horizontal scroll on narrow screens (acceptance criteria: no
+   horizontal scroll at 375px), and make sure touch scrolling feels native. */
+html,
+body {
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}

@@ -1,4 +1,4 @@
-// InterventionPanel.jsx — AI teaching suggestions (#33, AC #4)
+// InterventionPanel.jsx — AI teaching suggestions (#33, AC #4), responsive (#34)
 // Shows 3+ suggestions from the intervention agent (#29).
 // The agent is still a stub server-side; this renders the deterministic
 // demo set from dashboardData so the panel is always populated for review.
@@ -16,48 +16,27 @@ export default function InterventionPanel() {
         ];
 
   return (
-    <div style={styles.card} aria-label="Intervention suggestions">
-      <h3 style={styles.h3}>Intervention Suggestions</h3>
-      <p style={styles.subtitle}>
+    <div
+      className="bg-white border border-gray-200 rounded-xl p-4 sm:p-5 shadow-sm"
+      aria-label="Intervention suggestions"
+    >
+      <h3 className="text-base font-semibold text-gray-900 mb-1">
+        Intervention Suggestions
+      </h3>
+      <p className="text-xs text-gray-500 mb-3">
         AI-generated, based on live engagement signals
       </p>
 
-      <ol style={styles.list}>
+      <ol className="grid gap-2.5">
         {suggestions.map((s, i) => (
-          <li key={i} style={styles.item}>
-            <span style={styles.num}>{i + 1}</span>
-            <span style={styles.text}>{s}</span>
+          <li key={i} className="flex gap-2.5 items-start">
+            <span className="shrink-0 w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center mt-0.5">
+              {i + 1}
+            </span>
+            <span className="text-sm text-gray-700 leading-relaxed">{s}</span>
           </li>
         ))}
       </ol>
     </div>
   );
 }
-
-const styles = {
-  card: {
-    background: "#fff",
-    border: "1px solid #e5e7eb",
-    borderRadius: 12,
-    padding: 16,
-    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-  },
-  h3: { margin: "0 0 4px", fontSize: 16, color: "#111827" },
-  subtitle: { fontSize: 12, color: "#6b7280", margin: "0 0 12px" },
-  list: { listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 10 },
-  item: { display: "flex", gap: 10, alignItems: "flex-start" },
-  num: {
-    flexShrink: 0,
-    width: 22,
-    height: 22,
-    borderRadius: "50%",
-    background: "#4f46e5",
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: 700,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  text: { fontSize: 13, color: "#374151", lineHeight: 1.4 },
-};
